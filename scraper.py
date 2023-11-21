@@ -1,10 +1,8 @@
-import sqlite3
 from flask import Flask, jsonify, request
 from flask_restful import Api
 import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
-from cachetools import cached, TTLCache
 from database import Database
 
 
@@ -21,15 +19,11 @@ class InstantGamingAPI:
         self.api = Api(self.app)
         self.url = "https://www.instant-gaming.com/en"
         self.products = []
-        self.name = None
-        self.info = None
-        self.price = None
-        self.link = None
         self.port = 5000
 
         try:
-            self.db = Database('pricerunner.db')
-        except sqlite3.Error as e:
+            self.db = Database('InstantGaming.db')
+        except Exception as e:
             print(f"Error connecting to the database: {e}")
 
     @staticmethod
@@ -45,15 +39,12 @@ class InstantGamingAPI:
 
         return Product(name, price, link)
 
-    # Create a cache with a TTL (time-to-live) of 300 seconds
-    cache = TTLCache(maxsize=100, ttl=300)
-
-    @cached(cache)
     def search_product(self, product_name):
-        self.url = f'{self.url}/search/?q={product_name.replace(" ", "+")}'
+        self.products = []
+        search_url = f'{self.url}/search/?q={product_name.replace(" ", "+")}'
 
         try:
-            response = requests.get(self.url)
+            response = requests.get(search_url)
 
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
@@ -63,7 +54,6 @@ class InstantGamingAPI:
                     for item_div in product_div.find_all('div', class_='item force-badge'):
                         product = self.scrape_product_data(item_div)
                         self.products.append(Product(product.name, product.price, product.link))
-                        print(self.products)
 
         except requests.exceptions.RequestException as e:
             print(f"Error: {e}")
@@ -73,33 +63,36 @@ class InstantGamingAPI:
         return self.products
 
     def get_product_by_name(self, product_name):
-        query = "SELECT * FROM mytable WHERE name = ?"
-        result = self.db.execute_query(query, (product_name,))
+        result = self.db.get_product_by_name(product_name)
         if result:
             return jsonify(result)
         return jsonify({'message': 'Product not found'}), 404
 
     def update_product_price(self, product_name, new_price):
-        query = "UPDATE mytable SET price = ? WHERE name = ?"
-        self.db.execute_update(query, (new_price, product_name))
-        return jsonify({'message': 'Product price updated successfully'})
+        success = self.db.update_product_price(product_name, new_price)
+        if success:
+            return jsonify({'message': 'Product price updated successfully'})
+        return jsonify({'message': 'Failed to update product price'}), 500
 
     def delete_product(self, product_name):
-        query = "DELETE FROM mytable WHERE name = ?"
-        self.db.execute_update(query, (product_name,))
-        return jsonify({'message': 'Product deleted successfully'})
+        success = self.db.delete_product(product_name)
+        if success:
+            return jsonify({'message': 'Product deleted successfully'})
+        return jsonify({'message': 'Failed to delete product'}), 500
 
     def run(self):
         @self.app.route('/search/<product_name>')
         def search_route(product_name):
             try:
+                # self.db.add_product(product)
                 products = self.search_product(product_name)
-                insert_query = "INSERT INTO mytable (name, price, link) VALUES (?, ?, ?)"
 
-                for product in products:
-                    data_to_insert = (product.name, product.price, product.link)
-                    # self.db.execute_update(insert_query, data_to_insert)
+                if products:
+                    response_str = '\n'.join(f"{i + 1}: {product}" for i, product in enumerate(products))
+                    print(response_str)
                     return jsonify(products)
+                else:
+                    return jsonify({'message': 'No products found'}), 404
 
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
