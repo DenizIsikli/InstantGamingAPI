@@ -1,8 +1,8 @@
-from scraper import InstantGamingAPI
+from scraper import QuittAPI
 
 
 def main():
-    api = InstantGamingAPI()
+    api = QuittAPI()
     api.run()
 
 

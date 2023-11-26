@@ -9,51 +9,55 @@ from database import Database
 @dataclass
 class Product:
     name: str = None
-    price: int = None
+    year: int = None
+    duration: str = None
     link: str = None
 
 
-class InstantGamingAPI:
+class QuittAPI:
     def __init__(self):
         self.app = Flask(__name__)
         self.api = Api(self.app)
-        self.url = "https://www.instant-gaming.com/en"
+        self.url = "https://quitt.net/"
         self.products = []
         self.port = 5000
 
         try:
-            self.db = Database('InstantGaming.db')
+            self.db = Database('Quitt.db')
         except Exception as e:
             print(f"Error connecting to the database: {e}")
 
     @staticmethod
     def scrape_product_data(item_div):
-        name_element = item_div.find('span', class_='title')
-        price_element = item_div.find('div', class_='price')
-        link_element = item_div.find('a', class_='cover video is-playable played')
+        h2_tag = item_div.find('h2', class_='film-name')
+        name_element = h2_tag.find('a')
+        year_element = item_div.find('span', class_='fdi-item')
+        duration_element = item_div.find('span', class_='fdi-item fdi-duration')
+        link_element = item_div.find('a', class_='film-poster-ahref flw-item-tip')['href']
 
         # Extract product information within each product's container
-        name = name_element.text if name_element else None
-        price = price_element.text if price_element else None
-        link = link_element.text if link_element else None
+        name = name_element.get_text(strip=True) if name_element else None
+        year = year_element.text if year_element else None
+        duration = duration_element.text if duration_element else "Season"
+        link = f"https://quitt.net/{link_element}" if link_element else None
 
-        return Product(name, price, link)
+        return Product(name, year, duration, link)
 
     def search_product(self, product_name):
         self.products = []
-        search_url = f'{self.url}/search/?q={product_name.replace(" ", "+")}'
+        search_url = f'{self.url}/search/{product_name.replace(" ", "-")}'
 
         try:
             response = requests.get(search_url)
 
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                product_div = soup.find('div', class_='search listing-items')
+                product_div = soup.find('div', class_='film_list-wrap')
 
                 if product_div:
-                    for item_div in product_div.find_all('div', class_='item force-badge'):
+                    for item_div in product_div.find_all('div', class_='flw-item'):
                         product = self.scrape_product_data(item_div)
-                        self.products.append(Product(product.name, product.price, product.link))
+                        self.products.append(Product(product.name, product.year, product.duration, product.link))
 
         except requests.exceptions.RequestException as e:
             print(f"Error: {e}")
@@ -89,7 +93,7 @@ class InstantGamingAPI:
 
                 if products:
                     response_str = '\n'.join(f"{i + 1}: {product}" for i, product in enumerate(products))
-                    print(response_str)
+                    print(f"{response_str}\n")
                     return jsonify(products)
                 else:
                     return jsonify({'message': 'No products found'}), 404
