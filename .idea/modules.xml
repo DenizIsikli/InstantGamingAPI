@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/InstantGamingAPI.iml" filepath="$PROJECT_DIR$/.idea/InstantGamingAPI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/QuittAPI.iml" filepath="$PROJECT_DIR$/.idea/QuittAPI.iml" />
     </modules>
   </component>
 </project>
