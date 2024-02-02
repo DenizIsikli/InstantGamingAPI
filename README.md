@@ -1,3 +1,8 @@
+# Disclaimer
+
+Quitt.net has been taken down and is no longer available meaning that this API is no longer functional.
+This repository is kept for informational purposes only.
+
 # QuittAPI
 
 QuittAPI is a Flask-based RESTful API developed to retrieve information about movies and TV shows available on Quitt.net. It offers various endpoints to access and manage product information in a structured format.
