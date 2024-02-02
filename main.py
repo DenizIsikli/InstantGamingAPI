@@ -1,4 +1,4 @@
-from scraper import QuittAPI
+from QuittAPI import QuittAPI
 
 
 def main():
