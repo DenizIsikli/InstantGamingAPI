@@ -85,7 +85,7 @@ class QuittAPI:
             if db is not None:
                 db.close_connection()
 
-        @self.app.route('/search/<media_name>')
+        @self.app.route('/search/<media_name>', methods=['GET'])
         def search_route(media_name):
             try:
                 media = self.search_media(media_name)
