@@ -5,6 +5,7 @@ class Database:
     def __init__(self, db_name):
         self.db_name = db_name
         self.conn = sqlite3.connect(self.db_name)
+        self.cursor = self.conn.cursor()
         self.create_table()
 
     @staticmethod
@@ -18,8 +19,7 @@ class Database:
 
     def create_table(self):
         try:
-            cursor = self.conn.cursor()
-            cursor.execute('''
+            self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS Media (
                     name TEXT NOT NULL,
                     year INTEGER,
@@ -33,14 +33,12 @@ class Database:
 
     def add_media(self, media):
         try:
-            cursor = self.conn.cursor()
-
             media_data = [
                 (media.name, media.year, media.duration, media.link)
                 for media in media
             ]
 
-            cursor.executemany('''
+            self.cursor.executemany('''
                 INSERT INTO Media (name, year, duration, link)
                 VALUES (?, ?, ?, ?)
             ''', media_data)
@@ -50,9 +48,8 @@ class Database:
 
     def get_media_by_name(self, media_name):
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("SELECT * FROM Media WHERE name = ?", (media_name,))
-            result = cursor.fetchall()
+            self.cursor.execute("SELECT * FROM Media WHERE name = ?", (media_name,))
+            result = self.cursor.fetchall()
             return result
         except sqlite3.Error as e:
             print(f"Error retrieving media: {e}")
@@ -60,16 +57,14 @@ class Database:
 
     def delete_media(self, media_name):
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM Media WHERE name = ?", (media_name,))
+            self.cursor.execute("DELETE FROM Media WHERE name = ?", (media_name,))
             self.conn.commit()
         except sqlite3.Error as e:
             print(f"Error deleting media: {e}")
 
     def clear_table(self):
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM Media")
+            self.cursor.execute("DELETE FROM Media")
             self.conn.commit()
         except sqlite3.Error as e:
             print(f"Error clearing table: {e}")

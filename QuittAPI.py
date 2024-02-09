@@ -19,7 +19,7 @@ class QuittAPI:
         self.app = Flask(__name__)
         self.app.config['DATABASE'] = 'Quitt.db'
         self.api = Api(self.app)
-        self.url = "https://quitt.net/"
+        self.url = "https://quitt.net"
         self.media = []
         self.port = 5000
 
@@ -66,18 +66,6 @@ class QuittAPI:
 
         return self.media
 
-    def get_media_by_name(self, media_name):
-        result = self.db.get_media_by_name(media_name)
-        if result:
-            return jsonify(result)
-        return jsonify({'message': 'Media not found'}), 404
-
-    def delete_media(self, media_name):
-        success = self.db.delete_media(media_name)
-        if success:
-            return jsonify({'message': 'Media deleted successfully'})
-        return jsonify({'message': 'Failed to delete media'}), 500
-
     def run(self):
         @self.app.teardown_appcontext
         def close_db_connection(exception=None):
@@ -113,3 +101,15 @@ class QuittAPI:
             return jsonify({'error': 'Invalid request method'}), 405
 
         self.app.run(port=self.port, debug=True)
+
+    def get_media_by_name(self, media_name):
+        result = self.db.get_media_by_name(media_name)
+        if result:
+            return jsonify(result)
+        return jsonify({'message': 'Media not found'}), 404
+
+    def delete_media(self, media_name):
+        success = self.db.delete_media(media_name)
+        if success:
+            return jsonify({'message': 'Media deleted successfully'})
+        return jsonify({'message': 'Failed to delete media'}), 500
